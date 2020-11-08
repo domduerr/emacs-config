@@ -62,13 +62,10 @@
 
 ** Theme
 #+begin_src emacs-lisp
-  (use-package leuven-theme
+  (use-package ubuntu-theme
     :ensure t
     :defer t
-    :init (load-theme 'leuven t))
-
-  ;; But the curser should always stay visible
-  (set-cursor-color "#ff0000")
+    :init (load-theme 'ubuntu t))
 
   ;;Equiq the theme by a nice powerline
   (use-package powerline
