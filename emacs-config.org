@@ -1,0 +1,299 @@
+* Package management
+#+begin_src emacs-lisp
+  ;; Add melpa as interesting packages are there
+  (add-to-list 'package-archives
+               '("melpa" . "https://melpa.org/packages/"))
+
+  ;; Install use-package manually. All other packages are installed by use-package
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
+
+
+  ;; Automatically update out-dated packages
+  (use-package auto-package-update
+    :ensure t
+    :config
+    (setq auto-package-update-delete-old-versions t)
+    (setq auto-package-update-hide-results t)
+    (auto-package-update-maybe))
+#+end_src
+
+* Look and feel
+** Fix UI
+#+begin_src emacs-lisp
+  (fringe-mode 1)                                     ; Make fringes small
+  (menu-bar-mode -1)                                  ; Disable menu bar
+  (scroll-bar-mode -1)                                ; Disable scroll bar
+  (tool-bar-mode -1)                                  ; Disable tool bar
+  (add-to-list 'default-frame-alist                   ; Maximize window
+               '(fullscreen . maximized))
+#+end_src
+
+** Better defaults
+#+begin_src emacs-lisp
+  (setq-default
+   comint-prompt-read-only t                          ; Don't allow to delete begin of shell
+   compilation-ask-about-save nil                     ; Save before compiling
+   fill-column 80                                     ; Set width for automatic line breaks
+   indent-tabs-mode nil                               ; Stop using tabs to indent
+   inhibit-startup-screen t                           ; Disable splash screen
+   initial-scratch-message ""                         ; Empty the initial *scratch* buffer
+   ring-bell-function 'ignore                         ; Dont beep for errors
+   truncate-lines nil)                                ; Dont show line break symbol
+  (global-linum-mode 1)                               ; Show line numbers
+  (defalias 'yes-or-no-p 'y-or-n-p)                   ; Answer yes-no questions with one key
+  (add-hook 'before-save-hook 'whitespace-cleanup)    ; Delete trailing whitespaces when save
+#+end_src
+
+** Cursor
+#+begin_src emacs-lisp
+  (setq-default
+   cursor-type 'bar                                   ; Make the cursor a horizontal line
+   cursor-in-non-selected-windows nil)                ; Don't show cursor o second window
+  (blink-cursor-mode 0)                               ; Static cursor
+  (global-hl-line-mode 1)                             ; Highlight line with cursor
+#+end_src
+
+** Follow mouse
+#+begin_src emacs-lisp
+  (setq mouse-autoselect-window t)                    ; Select a window as the mouse pointer enters it
+#+end_src
+
+** Theme
+#+begin_src emacs-lisp
+  (use-package leuven-theme
+    :ensure t
+    :defer t
+    :init (load-theme 'leuven t))
+
+  ;; But the curser should always stay visible
+  (set-cursor-color "#ff0000")
+
+  ;;Equiq the theme by a nice powerline
+  (use-package powerline
+    :ensure t
+    :config
+    (powerline-default-theme))
+#+end_src
+
+* Backend mechanics
+** Backups
+Make backups in .emacs.d folder
+#+begin_src emacs-lisp
+  (defvar user-temporary-file-directory (expand-file-name "backups/" user-emacs-directory))
+  (make-directory user-temporary-file-directory t)
+  (setq backup-by-copying t)
+  (setq backup-directory-alist
+        `(("." . ,user-temporary-file-directory)
+          (,tramp-file-name-regexp nil)))
+  (setq auto-save-list-file-prefix
+        (concat user-temporary-file-directory ".auto-saves-"))
+  (setq auto-save-file-name-transforms
+        `((".*" ,user-temporary-file-directory t)))
+#+end_src
+
+** Customizations
+;; Customizations in an own file, do not clutter my configruation file
+#+begin_src emacs-lisp
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file :noerror)
+#+end_src
+
+** Speed improvements
+#+begin_src emacs-lisp
+(so-long-mode)                        ; Improve handeling of long files
+(setq tramp-default-method "ssh")     ; Tramp should use ssh because it is faster then scp
+#+end_src
+
+* vterm
+Emacs-libvterm (vterm) is fully-fledged terminal emulator inside GNU Emacs based
+on libvterm, a C library. As a result of using compiled code (instead of elisp),
+emacs-libvterm is fully capable, fast, and it can seamlessly handle large
+outputs.
+
+https://github.com/akermu/emacs-libvterm
+
+The package needs the packages "cmake" and "libtool-bin".
+
+#+begin_src emacs-lisp
+(use-package vterm
+  :ensure t
+)
+#+end_src
+
+* Helm
+ Helm is an Emacs framework for incremental completions and narrowing
+selections. It provides an easy-to-use API for developers wishing to build their
+own Helm applications in Emacs, powerful search tools and dozens of already
+built-in commands providing completion to almost everything. It is a must-have
+for anyone using Emacs as a main work environment. Helm has been widely adopted
+by many Emacs power-users. It is available in Melpa and can be easily installed
+from the Emacs package manager.
+
+#+begin_src emacs-lisp
+  (use-package helm
+    :ensure t
+    :bind (("M-x" . helm-M-x)
+           ("C-x r b" . helm-filtered-bookmarks)
+           ("C-x C-f" . helm-find-files))
+   :init (helm-mode 1))
+#+end_src
+
+* Org mode
+** Org-babel
+#+begin_src emacs-lisp
+  (setq org-src-tab-acts-natively t)
+#+end_src
+
+* Parenthesis
+Smartparens is a minor mode for dealing with pairs in Emacs.
+
+#+begin_src emacs-lisp
+  (show-paren-mode 1)           ;; Highlight matching pairs
+  (setq show-paren-delay 0)     ;; Highlight matching pairs instantly
+  (use-package smartparens
+    :ensure t
+    :bind (("C-ß" . sp-forward-barf-sexp)
+           ("<C-dead-acute>" . sp-forward-slurp-sexp)
+           ("C-ü" . sp-backward-slurp-sexp)
+           ("C-+" . sp-backward-barf-sexp))
+    :init
+    (require 'smartparens-config)
+    (smartparens-global-mode))
+#+end_src
+
+* Company
+Company is a text completion framework for Emacs. The name stands for "complete
+anything". It uses pluggable back-ends and front-ends to retrieve and display
+completion candidates.
+
+#+begin_src emacs-lisp
+  (use-package company
+    :ensure t
+    :diminish
+    :custom
+    (company-minimum-prefix-length 2 "Only 2 letters required for completion to activate.")
+    (company-dabbrev-other-buffers t "Search other buffers for compleition candidates")
+    (company-dabbrev-code-other-buffers t "Search other buffers for compleition candidates")
+    (company-complete-number t "Allow (lengthy) numbers to be eligible for completion")
+    (company-show-numbers t "Allow (lengthy) numbers to be eligible for completion")
+    (company-selection-wrap-around t "Edge of the completion list cycles around")
+    (company-dabbrev-downcase nil "Do not downcase completions by default")
+    (company-dabbrev-ignore-case t "Even if I write something with the ‘wrong’ case, provide the ‘correct’ casing")
+    (company-idle-delay 0 "Immediately activate completion")
+    :config
+    (global-company-mode 1))
+#+end_src
+
+* AUCTeX
+AUCTeX is an extensible package for writing and formatting TeX files in Emacs and XEmacs.
+
+#+begin_src emacs-lisp
+  (use-package tex
+    :ensure auctex
+    :defer t
+    :custom
+    (TeX-auto-save t "Parse the auto folder on save. Needed for a lot of auctex cool stuff.")
+    (TeX-parse-self t "Parse the auto folder on startup.")
+    (TeX-master nil "Set master file for each file individually.")
+    (TeX-PDF-mode t "PDF als standard")
+    (reftex-plug-into-AUCTeX t)
+    (TeX-save-query nil "Dont ask me if I want to save my document")
+    (TeX-error-overview-open-after-TeX-run t "Open TeX error overview in case of errors")
+    :hook
+    ((LaTeX-mode . (lambda()
+                     (flyspell-mode)
+                     (LaTeX-math-mode)
+                     (turn-on-reftex)
+                     (TeX-source-correlate-mode)
+                     (visual-line-mode)
+                     (auto-fill-mode)))
+     (TeX-language-de . (lambda() (ispell-change-dictionary "german8")))
+     (TeX-language-en . (lambda() (ispell-change-dictionary "american")))))
+#+end_src
+
+* Clojure
+CIDER extends Emacs with support for interactive programming in Clojure. The
+features are centered around cider-mode, an Emacs minor-mode that complements
+clojure-mode. While clojure-mode supports editing Clojure source files,
+cider-mode adds support for interacting with a running Clojure process for
+compilation, code completion, debugging, definition and documentation lookup,
+running tests and so on.
+
+#+begin_src emacs-lisp
+  (use-package clojure-mode
+    :ensure t)
+
+  (use-package cider
+    :ensure t)
+#+end_src
+
+* Magit
+Magit is an interface to the version control system Git, implemented as an
+Emacs package. Magit aspires to be a complete Git porcelain. While we cannot
+(yet) claim that Magit wraps and improves upon each and every Git command, it is
+complete enough to allow even experienced Git users to perform almost all of
+their daily version control tasks directly from within Emacs. While many fine
+Git clients exist, only Magit and Git itself deserve to be called porcelains.
+
+#+begin_src emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind (("C-x g" . magit-status)))
+#+end_src
+* Projectile
+Projectile is a project interaction library for Emacs. Its goal is to provide a
+nice set of features operating on a project level without introducing external
+dependencies (when feasible).
+
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :config
+    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+    (projectile-mode +1))
+#+end_src
+
+* LSP
+Client for Language Server Protocol. lsp-mode aims to provide IDE-like
+experience by providing optional integration with the most popular Emacs
+packages like company, flycheck and projectile.
+
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :ensure t
+    :commands lsp
+    :hook ((python-mode . lsp)))
+
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode
+    :hook (lsp-mode . lsp-ui-mode))
+
+  (use-package company-lsp
+    :ensure t
+    :commands company-lsp
+    :config
+    (push 'company-lsp company-backends))
+#+end_src
+
+** Python
+This is a simple global minor mode which will replicate the changes done by
+virtualenv activation inside Emacs.
+
+#+begin_src emacs-lisp
+  (use-package pyvenv
+    :ensure t)
+#+end_src
+
+Automatically activate python virtualenvs on emacs based on project name or
+.python-version file.
+
+#+begin_src emacs-lisp
+  (use-package auto-virtualenv
+    :ensure t
+    :hook ((python-mode . auto-virtualenv-set-virtualenv))
+    :config (require 'auto-virtualenv)
+    )
+#+end_src
