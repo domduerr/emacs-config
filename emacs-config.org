@@ -41,7 +41,7 @@
    initial-scratch-message ""                         ; Empty the initial *scratch* buffer
    ring-bell-function 'ignore                         ; Dont beep for errors
    truncate-lines nil)                                ; Dont show line break symbol
-  (global-linum-mode 1)                               ; Show line numbers
+  (global-display-line-numbers-mode 1)                ; Show line numbers
   (defalias 'yes-or-no-p 'y-or-n-p)                   ; Answer yes-no questions with one key
   (add-hook 'before-save-hook 'whitespace-cleanup)    ; Delete trailing whitespaces when save
 #+end_src
@@ -204,8 +204,7 @@ AUCTeX is an extensible package for writing and formatting TeX files in Emacs an
                      (LaTeX-math-mode)
                      (turn-on-reftex)
                      (TeX-source-correlate-mode)
-                     (visual-line-mode)
-                     (auto-fill-mode)))
+                     (visual-line-mode)))
      (TeX-language-de . (lambda() (ispell-change-dictionary "german8")))
      (TeX-language-en . (lambda() (ispell-change-dictionary "american")))))
 #+end_src
