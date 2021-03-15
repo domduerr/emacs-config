@@ -157,7 +157,14 @@ Smartparens is a minor mode for dealing with pairs in Emacs.
            ("C-+" . sp-backward-barf-sexp))
     :init
     (require 'smartparens-config)
-    (smartparens-global-mode))
+    (smartparens-global-mode)
+    (sp-with-modes '(tex-mode
+                 plain-tex-mode
+                 latex-mode
+                 LaTeX-mode)
+  (sp-local-pair "\"`" "\"'"
+                 :unless '(sp-latex-point-after-backslash sp-in-math-p)
+                 :post-handlers '(sp-latex-skip-double-quote))))
 #+end_src
 
 * Company
@@ -179,6 +186,8 @@ completion candidates.
     (company-dabbrev-downcase nil "Do not downcase completions by default")
     (company-dabbrev-ignore-case t "Even if I write something with the ‘wrong’ case, provide the ‘correct’ casing")
     (company-idle-delay 0 "Immediately activate completion")
+    (company-backends '(company-capf) "Backend für z.B. LSP-mode")
+
     :config
     (global-company-mode 1))
 #+end_src
@@ -198,6 +207,7 @@ AUCTeX is an extensible package for writing and formatting TeX files in Emacs an
     (reftex-plug-into-AUCTeX t)
     (TeX-save-query nil "Dont ask me if I want to save my document")
     (TeX-error-overview-open-after-TeX-run t "Open TeX error overview in case of errors")
+    (TeX-quote-language-alist (quote (("ngerman" "\"`" "\"'" nil))) "Fix problems with smartparens")
     :hook
     ((LaTeX-mode . (lambda()
                      (flyspell-mode)
@@ -266,12 +276,6 @@ packages like company, flycheck and projectile.
     :ensure t
     :commands lsp-ui-mode
     :hook (lsp-mode . lsp-ui-mode))
-
-  (use-package company-lsp
-    :ensure t
-    :commands company-lsp
-    :config
-    (push 'company-lsp company-backends))
 #+end_src
 
 ** Python
